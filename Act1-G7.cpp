@@ -42,25 +42,32 @@ string formatFloor(int floor) {
 struct Elevator {
     int currentFloor;
     bool goingUp;
+    bool visitedGround;
     int currentPassengers;
     const int maxCapacity;
     map<int, int> passengerDestinations;
 
-    Elevator() : currentFloor(0), goingUp(true), currentPassengers(0), maxCapacity(8) {}
+    Elevator() : currentFloor(1), goingUp(true), visitedGround (false), currentPassengers(0), maxCapacity(8) {}
 
     void moveToFloor(int floor) {
         scoped_lock lock(elevatorMutex);
-
+        
+        if(currentFloor != floor){
         cout << "\nElevator is moving from " << formatFloor(currentFloor)
              << " to " << formatFloor(floor) << ".\n";
+        }
 
         // Simulate movement between floors
         while (currentFloor != floor) {
             this_thread::sleep_for(chrono::milliseconds(500));
-            if (currentFloor < floor)
+            if (currentFloor < floor) {
                 currentFloor++;
-            else
+                goingUp = true;
+            }
+            else {
                 currentFloor--;
+                goingUp = false;
+            }
 
             cout << "Elevator is now at " << formatFloor(currentFloor) << ".\n";
 
@@ -73,11 +80,19 @@ struct Elevator {
                      << formatFloor(currentFloor) << ".\n";
             }
 
+            // elevator has to visit ground before going up
+            if (goingUp) {
+                goingUp = true;
+                visitedGround = true;
+            } else if (!goingUp) {
+                visitedGround = false;
+            }
+            
             // Handle 9th floor logic
             if (currentFloor == 9) {
                 goingUp = false;
+                visitedGround = false;
                 cout << "Elevator is at the top floor (9th Floor). It will now go down.\n";
-                break;
             }
         }
 
@@ -107,7 +122,10 @@ void elevatorOperation(Elevator &elevator) {
         string input;
         getline(cin, input);
 
-        if (input == "exit") break;
+        if (input == "exit") {
+            elevator.moveToFloor(1);
+            break;
+        }
 
         istringstream iss(input);
         string token;
@@ -124,7 +142,7 @@ void elevatorOperation(Elevator &elevator) {
                 currentFloor = stoi(token.substr(0, comma));
                 destinationFloor = stoi(token.substr(comma + 1));
 
-                if (currentFloor < 0 || currentFloor > 9 || destinationFloor < 0 || destinationFloor > 9 || currentFloor == destinationFloor) {
+                if (currentFloor < 0 || currentFloor > 10 || destinationFloor < 0 || destinationFloor > 10 || currentFloor == destinationFloor) {
                     throw invalid_argument("Invalid floor numbers");
                 }
             } catch (...) {
@@ -134,6 +152,12 @@ void elevatorOperation(Elevator &elevator) {
 
             int passengers = rand() % 5 + 1; // Random number of passengers (1 to 5)
             cout << "\n" << passengers << " passengers are waiting at " << formatFloor(currentFloor) << ".\n";
+
+            // Move elevator to 1st floor if going up again
+            if (!elevator.visitedGround && elevator.currentFloor != 1) {
+                cout << "Elevator must first go down to the Ground Floor before taking new requests.\n";
+                elevator.moveToFloor(1);
+            }
 
             // Move to current floor
             elevator.moveToFloor(currentFloor);
