@@ -82,7 +82,6 @@ struct Elevator {
 
             // elevator has to visit ground before going up
             if (goingUp) {
-                goingUp = true;
                 visitedGround = true;
             } else if (!goingUp) {
                 visitedGround = false;
@@ -152,9 +151,8 @@ void elevatorOperation(Elevator &elevator) {
 
             int passengers = rand() % 5 + 1; // Random number of passengers (1 to 5)
             cout << "\n" << passengers << " passengers are waiting at " << formatFloor(currentFloor) << ".\n";
-
-            // Move elevator to 1st floor if going up again
-            if (!elevator.visitedGround && elevator.currentFloor != 1) {
+            
+            if (!elevator.visitedGround && elevator.goingUp) {
                 cout << "Elevator must first go down to the Ground Floor before taking new requests.\n";
                 elevator.moveToFloor(1);
             }
