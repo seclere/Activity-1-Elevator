@@ -152,10 +152,18 @@ void elevatorOperation(Elevator &elevator) {
             int passengers = rand() % 5 + 1; // Random number of passengers (1 to 5)
             cout << "\n" << passengers << " passengers are waiting at " << formatFloor(currentFloor) << ".\n";
             
-            if (!elevator.visitedGround && elevator.goingUp) {
+            // variation where the elevator stops and processes on the way requests 
+            if (!elevator.visitedGround && !elevator.goingUp) {
                 cout << "Elevator must first go down to the Ground Floor before taking new requests.\n";
                 elevator.moveToFloor(1);
             }
+            
+            /* variation where the elevator goes down first before taking requests
+            if (!elevator.visitedGround && elevator.currentFloor != 1) {
+                cout << "Elevator must first go down to the Ground Floor before taking new requests.\n";
+                elevator.moveToFloor(1);
+            }
+            */
 
             // Move to current floor
             elevator.moveToFloor(currentFloor);
